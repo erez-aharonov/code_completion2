@@ -8,6 +8,15 @@ def unpack_siva_files_and_checkout_git_repos(dir_path):
         _extract_siva_files_directory(dir_name, dir_path)
 
 
+def get_python_files_paths(dir_path):
+    all_python_files_list = []
+    for root, dirs, files in os.walk(dir_path):
+        for file in files:
+            if file.endswith(".py"):
+                all_python_files_list.append(os.path.join(root, file))
+    return all_python_files_list
+
+
 def _extract_siva_files_directory(dir_name, dir_path):
     directory_files_list, full_dir_path = _get_directory_files_list(dir_name, dir_path)
     for file_name in directory_files_list:
