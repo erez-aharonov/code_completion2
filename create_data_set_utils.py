@@ -1,5 +1,7 @@
 import os
 import subprocess
+import pandas as pd
+import tokenize
 
 
 def unpack_siva_files_and_checkout_git_repos(dir_path):
@@ -15,6 +17,53 @@ def get_python_files_paths(dir_path):
             if file.endswith(".py"):
                 all_python_files_list.append(os.path.join(root, file))
     return all_python_files_list
+
+
+def create_python_files_df(all_python_files_list):
+    python_files_paths_series = pd.Series(all_python_files_list)
+    python_files_base_names_series = python_files_paths_series.apply(os.path.basename)
+    python_files_df = pd.DataFrame([python_files_paths_series, python_files_base_names_series]).T
+    python_files_df.columns = ['file_path', 'file_base_name']
+    python_files_df['file_size'] = python_files_df.file_path.apply(os.path.getsize)
+    python_files_df['number_of_lines'] = python_files_df.file_path.apply(_get_file_number_of_lines)
+    return python_files_df
+
+
+def create_tokens_df(python_files_df):
+    tokens_df_temp = python_files_df.file_path.apply(_get_tokens_df)
+    tokens_df = pd.concat(tokens_df_temp.values)
+    tokens_df.file_path = tokens_df.file_path.astype("category")
+    tokens_df.type_name = tokens_df.type_name.astype("category")
+    return tokens_df
+
+
+def _get_file_number_of_lines(file_path):
+    return len(open(file_path, 'rb').readline())
+
+
+def _get_tokens_df(file_path):
+    tokens_df = \
+        pd.DataFrame(
+            {},
+            columns=['type_name', 'string', 'start', 'end', 'line', 'file_path', 'line_index'])
+    try:
+        tokens_list = []
+        with open(file_path, 'rb') as f:
+            for five_tuple in tokenize.tokenize(f.readline):
+                token_dict = {
+                    'type_name': tokenize.tok_name[five_tuple.type],
+                    'string': five_tuple.string,
+                    'start': five_tuple.start,
+                    'end': five_tuple.end,
+                    'line': five_tuple.line,
+                    'file_path': file_path,
+                    'line_index': five_tuple.start[0]}
+                tokens_list.append(token_dict)
+        tokens_df = pd.DataFrame(tokens_list)
+    except:
+        print(file_path)
+        pass
+    return tokens_df
 
 
 def _extract_siva_files_directory(dir_name, dir_path):
