@@ -1,12 +1,12 @@
 import pandas as pd
 
 
-class CodeCompleter(object):
+class CodeImportLineCompleter(object):
     def __init__(self):
         self._imports_counts_df = None
 
-    def load_db(self, imports_lines_df):
-        imports_counts_series = imports_lines_df.line.value_counts()
+    def load_db(self, imports_lines_series):
+        imports_counts_series = imports_lines_series.value_counts()
         imports_counts_df = pd.DataFrame(imports_counts_series)
         imports_counts_df.rename(columns={'line': 'count'}, inplace=True)
         imports_counts_df['line'] = imports_counts_df.index.str.strip()
